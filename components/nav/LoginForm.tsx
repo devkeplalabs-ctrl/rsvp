@@ -58,24 +58,14 @@ export function LoginForm() {
         <Separator className="flex-1" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          variant="outline"
-          type="button"
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="text-sm"
-        >
-          Google
-        </Button>
-        <Button
-          variant="outline"
-          type="button"
-          onClick={() => signIn("apple", { callbackUrl: "/dashboard" })}
-          className="text-sm"
-        >
-          Apple
-        </Button>
-      </div>
+      <Button
+        variant="outline"
+        type="button"
+        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+        className="w-full text-sm"
+      >
+        Google
+      </Button>
 
       <p className="text-center text-xs text-zinc-400">
         New here? You&apos;ll be able to create your first event right after signing in.
