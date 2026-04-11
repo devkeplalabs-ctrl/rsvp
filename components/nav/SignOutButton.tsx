@@ -7,7 +7,7 @@ export function SignOutButton() {
   return (
     <DropdownMenuItem
       className="text-rose-700 cursor-pointer"
-      onSelect={() => signOut({ callbackUrl: "/login" })}
+      onClick={() => signOut({ callbackUrl: "/login" })}
     >
       Sign out
     </DropdownMenuItem>
