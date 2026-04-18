@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  json,
   pgEnum,
   pgTable,
   text,
@@ -9,58 +10,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-// ─── Auth.js required tables ────────────────────────────────────────────────
-
-export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  name: text("name"),
-  email: text("email").unique().notNull(),
-  emailVerified: timestamp("email_verified", { mode: "date" }),
-  image: text("image"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-});
-
-export const accounts = pgTable("accounts", {
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
-  provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
-  refresh_token: text("refresh_token"),
-  access_token: text("access_token"),
-  expires_at: integer("expires_at"),
-  token_type: text("token_type"),
-  scope: text("scope"),
-  id_token: text("id_token"),
-  session_state: text("session_state"),
-});
-
-export const sessions = pgTable("sessions", {
-  sessionToken: text("session_token").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
-});
-
-export const verificationTokens = pgTable(
-  "verification_tokens",
-  {
-    identifier: text("identifier").notNull(),
-    token: text("token").notNull(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
-  },
-  (t) => [uniqueIndex("verification_tokens_identifier_token").on(t.identifier, t.token)]
-);
-
 // ─── App tables ──────────────────────────────────────────────────────────────
 
 export const events = pgTable("events", {
   id: uuid("id").defaultRandom().primaryKey(),
-  hostId: text("host_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  hostId: text("host_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   location: text("location"),
@@ -73,6 +27,7 @@ export const events = pgTable("events", {
   allowPlusOnes: boolean("allow_plus_ones").default(false).notNull(),
   maxPlusOnes: integer("max_plus_ones").default(1).notNull(),
   capacity: integer("capacity"),
+  customDetails: json("custom_details").$type<{ label: string; content: string }[]>(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
@@ -115,7 +70,6 @@ export const rsvps = pgTable("rsvps", {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type User = typeof users.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type Guest = typeof guests.$inferSelect;
 export type Rsvp = typeof rsvps.$inferSelect;

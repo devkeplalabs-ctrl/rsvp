@@ -12,6 +12,8 @@ import { CalendarDays, Loader2, MapPin, Minus, Plus } from "lucide-react";
 import { updateEvent } from "@/lib/rsvp";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { Event } from "@/db/schema";
+import { CustomDetailsEditor, type CustomDetail } from "@/components/event/CustomDetailsEditor";
+import { LocationPicker } from "@/components/event/LocationPicker";
 
 interface Props {
   event: Event;
@@ -20,13 +22,15 @@ interface Props {
 export function EditEventForm({ event }: Props) {
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
-  const [location, setLocation] = useState(event.location ?? "");
   const [startsAt, setStartsAt] = useState(event.startsAt.toISOString());
   const [endsAt, setEndsAt] = useState(event.endsAt?.toISOString() ?? "");
   const [rsvpDeadline, setRsvpDeadline] = useState(event.rsvpDeadline?.toISOString() ?? "");
   const [coverImageUrl, setCoverImageUrl] = useState(event.coverImageUrl ?? "");
   const [allowPlusOnes, setAllowPlusOnes] = useState(event.allowPlusOnes);
   const [maxPlusOnes, setMaxPlusOnes] = useState(event.maxPlusOnes);
+  const [customDetails, setCustomDetails] = useState<CustomDetail[]>(
+    (event.customDetails as CustomDetail[]) ?? []
+  );
   const [isPending, startTransition] = useTransition();
 
   const formattedDate = startsAt
@@ -97,27 +101,14 @@ export function EditEventForm({ event }: Props) {
                 <DateTimePicker name="rsvpDeadline" value={rsvpDeadline} onChange={setRsvpDeadline} placeholder="Pick deadline" />
               </div>
             </div>
-            <div>
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                name="location"
-                placeholder="Bar Pisellino, NYC"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="mt-1"
-              />
-            </div>
             <div className="sm:col-span-2">
-              <Label htmlFor="locationUrl">Location URL (optional)</Label>
-              <Input
-                id="locationUrl"
-                name="locationUrl"
-                type="url"
-                placeholder="https://maps.google.com/..."
-                defaultValue={event.locationUrl ?? ""}
-                className="mt-1"
-              />
+              <Label>Location</Label>
+              <div className="mt-1">
+                <LocationPicker
+                  defaultLocationName={event.location ?? ""}
+                  defaultLocationUrl={event.locationUrl ?? ""}
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -183,6 +174,16 @@ export function EditEventForm({ event }: Props) {
           </div>
         </section>
 
+        {/* Section: Custom Details */}
+        <section>
+          <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">
+            04 / Custom Details
+          </p>
+          <p className="text-xs text-zinc-400 mb-4">Add extra info like dress code, parking, or schedule.</p>
+          <CustomDetailsEditor value={customDetails} onChange={setCustomDetails} />
+          <input type="hidden" name="customDetails" value={JSON.stringify(customDetails)} />
+        </section>
+
         <div className="flex items-center justify-between border-t border-stone-200 pt-6">
           <p className="text-xs text-zinc-400">Changes are saved immediately.</p>
           <div className="flex gap-3">
@@ -216,12 +217,6 @@ export function EditEventForm({ event }: Props) {
               <CalendarDays className="w-3 h-3" />
               <span>{formattedDate}{formattedTime ? ` · ${formattedTime}` : ""}</span>
             </div>
-            {location && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <MapPin className="w-3 h-3" />
-                <span>{location}</span>
-              </div>
-            )}
             {description && <p className="text-xs text-zinc-500 line-clamp-3">{description}</p>}
             <Button size="sm" className="w-full bg-rose-700 hover:bg-rose-800 text-white mt-2" disabled>
               RSVP Now

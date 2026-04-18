@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { events, guests, rsvps } from "@/db/schema";
 import { LinkButton } from "@/components/ui/link-button";
@@ -35,8 +35,8 @@ async function getHostEvents(hostId: string) {
 }
 
 export default async function DashboardPage() {
-  const session = await auth();
-  const hostId = session!.user!.id!;
+  const { userId } = await auth();
+  const hostId = userId!;
   const eventList = await getHostEvents(hostId);
 
   const totalRsvps = eventList.reduce((s, e) => s + e.stats.total, 0);

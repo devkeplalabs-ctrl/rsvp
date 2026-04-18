@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { guests, events, users, rsvps } from "@/db/schema";
+import { guests, events, rsvps } from "@/db/schema";
+import { clerkClient } from "@clerk/nextjs/server";
 import { PublicEventLayout } from "@/components/event/PublicEventLayout";
 import { RsvpForm } from "@/components/event/RsvpForm";
 import { Badge } from "@/components/ui/badge";
@@ -30,11 +31,9 @@ export default async function TokenizedInvitePage({
 
   if (!event) notFound();
 
-  const [host] = await db
-    .select({ name: users.name })
-    .from(users)
-    .where(eq(users.id, event.hostId))
-    .limit(1);
+  const client = await clerkClient();
+  const hostUser = await client.users.getUser(event.hostId).catch(() => null);
+  const hostName = hostUser?.fullName ?? hostUser?.firstName ?? null;
 
   const [existing] = await db
     .select()
@@ -61,7 +60,7 @@ export default async function TokenizedInvitePage({
 
       <PublicEventLayout
         event={event}
-        hostName={host?.name ?? null}
+        hostName={hostName}
         sidebarTitle="Will you join us?"
       >
         {isPastDeadline ? (

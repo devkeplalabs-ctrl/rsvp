@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { currentUser } from "@clerk/nextjs/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -14,10 +14,11 @@ import { NavLink } from "./NavLink";
 import { SignOutButton } from "./SignOutButton";
 
 export async function TopNav() {
-  const session = await auth();
-  const user = session?.user;
-  const initials = user?.name
-    ? user.name
+  const user = await currentUser();
+  const displayName = user?.fullName ?? user?.firstName ?? null;
+  const email = user?.emailAddresses[0]?.emailAddress ?? null;
+  const initials = displayName
+    ? displayName
         .split(" ")
         .map((n) => n[0])
         .join("")
@@ -46,16 +47,16 @@ export async function TopNav() {
               className="rounded-full focus:outline-none focus:ring-2 focus:ring-rose-700 focus:ring-offset-2"
             >
               <Avatar className="w-8 h-8">
-                <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "User"} />
+                <AvatarImage src={user?.imageUrl ?? undefined} alt={displayName ?? "User"} />
                 <AvatarFallback className="bg-rose-700 text-white text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {user?.email && (
+              {email && (
                 <div className="px-3 py-2">
-                  <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+                  <p className="text-xs text-zinc-500 truncate">{email}</p>
                 </div>
               )}
               <DropdownMenuSeparator />

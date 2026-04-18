@@ -8,6 +8,13 @@
       "when": 1775833471442,
       "tag": "0000_low_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775903309727,
+      "tag": "0001_stiff_inertia",
+      "breakpoints": true
     }
   ]
 }

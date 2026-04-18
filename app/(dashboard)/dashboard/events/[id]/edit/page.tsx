@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { events } from "@/db/schema";
 import { EditEventForm } from "@/components/event/EditEventForm";
@@ -13,8 +13,8 @@ export default async function EditEventPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const [event] = await db
     .select()
@@ -22,7 +22,7 @@ export default async function EditEventPage({
     .where(eq(events.id, id))
     .limit(1);
 
-  if (!event || event.hostId !== session.user.id) notFound();
+  if (!event || event.hostId !== userId) notFound();
 
   return (
     <div>

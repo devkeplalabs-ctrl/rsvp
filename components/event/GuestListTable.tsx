@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { RsvpStatusBadge } from "@/components/shared/RsvpStatusBadge";
-import { Search, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, Trash2 } from "lucide-react";
 import { deleteGuest } from "@/lib/rsvp";
 
 interface GuestRow {
@@ -21,6 +21,8 @@ interface GuestRow {
   email: string | null;
   status: "yes" | "no" | "maybe" | null;
   plusOnes: number | null;
+  dietary: string | null;
+  message: string | null;
   respondedAt: Date | null;
 }
 
@@ -62,6 +64,14 @@ function DeleteButton({ guestId, guestName }: { guestId: string; guestName: stri
 export function GuestListTable({ guests, onResend }: Props) {
   const [tab, setTab] = useState<Tab>("All Guests");
   const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const filtered = filterByTab(guests, tab).filter(
     (g) =>
@@ -120,45 +130,82 @@ export function GuestListTable({ guests, onResend }: Props) {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((guest) => (
-                <TableRow key={guest.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-7 h-7">
-                        <AvatarFallback className="text-xs bg-rose-50 text-rose-700">
-                          {guest.name[0]?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium text-zinc-900 text-sm">{guest.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-zinc-500">{guest.email ?? "—"}</TableCell>
-                  <TableCell>
-                    <RsvpStatusBadge status={guest.status ?? "pending"} />
-                  </TableCell>
-                  <TableCell className="text-sm text-zinc-500">{guest.plusOnes ?? 0}</TableCell>
-                  <TableCell className="text-sm text-zinc-500">
-                    {guest.respondedAt
-                      ? guest.respondedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                      : (
-                        <span className="text-zinc-400">
-                          No response{" "}
-                          {guest.email && onResend && (
+              filtered.map((guest) => {
+                const hasNotes = guest.dietary || guest.message;
+                const isExpanded = expanded.has(guest.id);
+                return (
+                  <>
+                    <TableRow key={guest.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-7 h-7">
+                            <AvatarFallback className="text-xs bg-rose-50 text-rose-700">
+                              {guest.name[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium text-zinc-900 text-sm">{guest.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-zinc-500">{guest.email ?? "—"}</TableCell>
+                      <TableCell>
+                        <RsvpStatusBadge status={guest.status ?? "pending"} />
+                      </TableCell>
+                      <TableCell className="text-sm text-zinc-500">{guest.plusOnes ?? 0}</TableCell>
+                      <TableCell className="text-sm text-zinc-500">
+                        {guest.respondedAt
+                          ? guest.respondedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                          : (
+                            <span className="text-zinc-400">
+                              No response{" "}
+                              {guest.email && onResend && (
+                                <button
+                                  onClick={() => onResend(guest.id)}
+                                  className="text-rose-700 hover:underline ml-1"
+                                >
+                                  Resend
+                                </button>
+                              )}
+                            </span>
+                          )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {hasNotes && (
                             <button
-                              onClick={() => onResend(guest.id)}
-                              className="text-rose-700 hover:underline ml-1"
+                              onClick={() => toggleExpand(guest.id)}
+                              className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-stone-100 transition-colors"
+                              title={isExpanded ? "Hide notes" : "Show notes"}
                             >
-                              Resend
+                              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                             </button>
                           )}
-                        </span>
-                      )}
-                  </TableCell>
-                  <TableCell>
-                    <DeleteButton guestId={guest.id} guestName={guest.name} />
-                  </TableCell>
-                </TableRow>
-              ))
+                          <DeleteButton guestId={guest.id} guestName={guest.name} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {isExpanded && hasNotes && (
+                      <TableRow key={`${guest.id}-notes`} className="bg-stone-50">
+                        <TableCell colSpan={6} className="py-3 px-4">
+                          <div className="space-y-2 text-sm">
+                            {guest.dietary && (
+                              <div>
+                                <span className="font-medium text-zinc-600">Dietary restrictions: </span>
+                                <span className="text-zinc-500">{guest.dietary}</span>
+                              </div>
+                            )}
+                            {guest.message && (
+                              <div>
+                                <span className="font-medium text-zinc-600">Message: </span>
+                                <span className="text-zinc-500">{guest.message}</span>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                );
+              })
             )}
           </TableBody>
         </Table>

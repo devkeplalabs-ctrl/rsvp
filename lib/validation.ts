@@ -12,6 +12,7 @@ export const createEventSchema = z.object({
   allowPlusOnes: z.boolean().default(false),
   maxPlusOnes: z.coerce.number().int().min(1).max(10).default(1),
   capacity: z.coerce.number().int().min(1).optional().or(z.literal("")),
+  customDetails: z.string().optional(),
 });
 
 export const addGuestSchema = z.object({

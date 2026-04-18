@@ -11,17 +11,19 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { CalendarDays, Loader2, MapPin, Minus, Plus } from "lucide-react";
 import { createEvent } from "@/lib/rsvp";
 import { ImageUploader } from "@/components/shared/ImageUploader";
+import { CustomDetailsEditor, type CustomDetail } from "@/components/event/CustomDetailsEditor";
+import { LocationPicker } from "@/components/event/LocationPicker";
 
 export function NewEventForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [rsvpDeadline, setRsvpDeadline] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [allowPlusOnes, setAllowPlusOnes] = useState(false);
   const [maxPlusOnes, setMaxPlusOnes] = useState(1);
+  const [customDetails, setCustomDetails] = useState<CustomDetail[]>([]);
   const [isPending, startTransition] = useTransition();
 
   const formattedDate = startsAt
@@ -119,26 +121,11 @@ export function NewEventForm() {
                 />
               </div>
             </div>
-            <div>
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                name="location"
-                placeholder="Bar Pisellino, NYC"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="mt-1"
-              />
-            </div>
             <div className="sm:col-span-2">
-              <Label htmlFor="locationUrl">Location URL (optional)</Label>
-              <Input
-                id="locationUrl"
-                name="locationUrl"
-                type="url"
-                placeholder="https://maps.google.com/..."
-                className="mt-1"
-              />
+              <Label>Location</Label>
+              <div className="mt-1">
+                <LocationPicker />
+              </div>
             </div>
           </div>
         </section>
@@ -209,6 +196,16 @@ export function NewEventForm() {
           </div>
         </section>
 
+        {/* Section: Custom Details */}
+        <section>
+          <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">
+            04 / Custom Details
+          </p>
+          <p className="text-xs text-zinc-400 mb-4">Add extra info like dress code, parking, or schedule.</p>
+          <CustomDetailsEditor value={customDetails} onChange={setCustomDetails} />
+          <input type="hidden" name="customDetails" value={JSON.stringify(customDetails)} />
+        </section>
+
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-stone-200 pt-6">
           <p className="text-xs text-zinc-400">Review your invitation details before finalising.</p>
@@ -258,12 +255,6 @@ export function NewEventForm() {
               <CalendarDays className="w-3 h-3" />
               <span>{formattedDate} · {formattedTime}</span>
             </div>
-            {location && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <MapPin className="w-3 h-3" />
-                <span>{location}</span>
-              </div>
-            )}
             {description && (
               <p className="text-xs text-zinc-500 line-clamp-3">{description}</p>
             )}

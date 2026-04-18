@@ -100,6 +100,17 @@ export function PublicEventLayout({
               </p>
             </div>
           )}
+
+          {event.customDetails && (event.customDetails as { label: string; content: string }[]).length > 0 && (
+            <div className="mt-6 space-y-4">
+              {(event.customDetails as { label: string; content: string }[]).map((detail, i) => (
+                <div key={i}>
+                  <h3 className="text-sm font-semibold text-zinc-900">{detail.label}</h3>
+                  <p className="text-sm text-zinc-600 mt-1 whitespace-pre-line">{detail.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right: RSVP sidebar */}

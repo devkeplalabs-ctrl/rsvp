@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { Pencil, CheckCircle2, XCircle, HelpCircle, Users } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { events, guests, rsvps } from "@/db/schema";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,10 @@ export default async function EventManagementPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
-  const event = await getEvent(id, session.user.id);
+  const event = await getEvent(id, userId);
   if (!event) notFound();
 
   const guestList = await getEventGuests(id);
@@ -171,6 +171,8 @@ export default async function EventManagementPage({
               email: g.email,
               status: g.status as "yes" | "no" | "maybe" | null,
               plusOnes: g.plusOnes,
+              dietary: g.dietary,
+              message: g.message,
               respondedAt: g.respondedAt,
             }))}
           />

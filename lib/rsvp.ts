@@ -13,13 +13,13 @@ import {
   createEventSchema,
   rsvpSchema,
 } from "@/lib/validation";
-import { auth } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 
 // ─── Event actions ────────────────────────────────────────────────────────────
 
 export async function createEvent(formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const raw = {
     title: formData.get("title"),
@@ -33,14 +33,16 @@ export async function createEvent(formData: FormData) {
     allowPlusOnes: formData.get("allowPlusOnes") === "true",
     maxPlusOnes: formData.get("maxPlusOnes"),
     capacity: formData.get("capacity"),
+    customDetails: formData.get("customDetails"),
   };
 
   const parsed = createEventSchema.parse(raw);
+  const customDetails = parsed.customDetails ? JSON.parse(parsed.customDetails) : null;
 
   const [event] = await db
     .insert(events)
     .values({
-      hostId: session.user.id,
+      hostId: userId,
       title: parsed.title,
       description: parsed.description || null,
       location: parsed.location || null,
@@ -53,6 +55,7 @@ export async function createEvent(formData: FormData) {
       allowPlusOnes: parsed.allowPlusOnes,
       maxPlusOnes: parsed.maxPlusOnes,
       capacity: parsed.capacity ? Number(parsed.capacity) : null,
+      customDetails,
     })
     .returning();
 
@@ -60,8 +63,8 @@ export async function createEvent(formData: FormData) {
 }
 
 export async function deleteEvent(eventId: string) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const [event] = await db
     .select({ hostId: events.hostId })
@@ -69,7 +72,7 @@ export async function deleteEvent(eventId: string) {
     .where(eq(events.id, eventId))
     .limit(1);
 
-  if (!event || event.hostId !== session.user.id) return;
+  if (!event || event.hostId !== userId) return;
 
   await db.delete(events).where(eq(events.id, eventId));
   revalidatePath("/dashboard");
@@ -77,8 +80,8 @@ export async function deleteEvent(eventId: string) {
 }
 
 export async function updateEvent(eventId: string, formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const raw = {
     title: formData.get("title"),
@@ -92,9 +95,11 @@ export async function updateEvent(eventId: string, formData: FormData) {
     allowPlusOnes: formData.get("allowPlusOnes") === "true",
     maxPlusOnes: formData.get("maxPlusOnes"),
     capacity: formData.get("capacity"),
+    customDetails: formData.get("customDetails"),
   };
 
   const parsed = createEventSchema.parse(raw);
+  const customDetails = parsed.customDetails ? JSON.parse(parsed.customDetails) : null;
 
   await db
     .update(events)
@@ -110,6 +115,7 @@ export async function updateEvent(eventId: string, formData: FormData) {
       allowPlusOnes: parsed.allowPlusOnes,
       maxPlusOnes: parsed.maxPlusOnes,
       capacity: parsed.capacity ? Number(parsed.capacity) : null,
+      customDetails,
       updatedAt: new Date(),
     })
     .where(eq(events.id, eventId));
@@ -158,6 +164,8 @@ export async function getEventGuests(eventId: string) {
       createdAt: guests.createdAt,
       status: rsvps.status,
       plusOnes: rsvps.plusOnes,
+      dietary: rsvps.dietary,
+      message: rsvps.message,
       respondedAt: rsvps.respondedAt,
     })
     .from(guests)
@@ -169,8 +177,8 @@ export async function getEventGuests(eventId: string) {
 // ─── Guest / invite actions ───────────────────────────────────────────────────
 
 export async function addGuest(eventId: string, formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const parsed = addGuestSchema.parse({
     name: formData.get("name"),
@@ -213,8 +221,8 @@ export async function addGuest(eventId: string, formData: FormData) {
 }
 
 export async function addGuestsBatch(eventId: string, formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const parsed = batchInviteSchema.parse({ emails: formData.get("emails") });
 
@@ -259,8 +267,8 @@ export async function addGuestsBatch(eventId: string, formData: FormData) {
 }
 
 export async function resendInvite(guestId: string) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const [guest] = await db
     .select()
@@ -379,8 +387,8 @@ export async function createPublicGuest(
 }
 
 export async function deleteGuest(guestId: string) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
 
   const [guest] = await db
     .select({ eventId: guests.eventId })
