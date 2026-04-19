@@ -22,6 +22,7 @@ export async function createEvent(formData: FormData) {
   if (!userId) redirect("/login");
 
   const raw = {
+    category: formData.get("category"),
     title: formData.get("title"),
     description: formData.get("description"),
     location: formData.get("location"),
@@ -43,6 +44,7 @@ export async function createEvent(formData: FormData) {
     .insert(events)
     .values({
       hostId: userId,
+      category: parsed.category,
       title: parsed.title,
       description: parsed.description || null,
       location: parsed.location || null,
@@ -84,6 +86,7 @@ export async function updateEvent(eventId: string, formData: FormData) {
   if (!userId) redirect("/login");
 
   const raw = {
+    category: formData.get("category"),
     title: formData.get("title"),
     description: formData.get("description"),
     location: formData.get("location"),
@@ -104,6 +107,7 @@ export async function updateEvent(eventId: string, formData: FormData) {
   await db
     .update(events)
     .set({
+      category: parsed.category,
       title: parsed.title,
       description: parsed.description || null,
       location: parsed.location || null,
@@ -371,6 +375,14 @@ export async function createPublicGuest(
   name: string,
   email: string
 ): Promise<string> {
+  const [existing] = await db
+    .select({ id: guests.id })
+    .from(guests)
+    .where(and(eq(guests.eventId, eventId), eq(guests.email, email)))
+    .limit(1);
+
+  if (existing) return existing.id;
+
   const token = generateInviteToken();
   const [guest] = await db
     .insert(guests)

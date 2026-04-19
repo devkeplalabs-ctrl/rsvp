@@ -3,10 +3,9 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { events, guests, rsvps } from "@/db/schema";
 import { clerkClient } from "@clerk/nextjs/server";
-import { PublicEventHero } from "@/components/event/PublicEventHero";
-import { PublicEventLayout } from "@/components/event/PublicEventLayout";
-import { PublicRsvpIdentityForm } from "@/components/event/PublicRsvpIdentityForm";
-import { RsvpForm } from "@/components/event/RsvpForm";
+import { getTemplate } from "@/lib/event-templates";
+import { InviteTemplate } from "@/components/invite/InviteTemplate";
+
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -25,9 +24,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
 
   if (!event) notFound();
 
-  const client = await clerkClient();
-  const hostUser = await client.users.getUser(event.hostId).catch(() => null);
-  const hostName = hostUser?.fullName ?? hostUser?.firstName ?? null;
+  const template = getTemplate(event.category);
 
   const attendeeRows = await db
     .select({ id: guests.id })
@@ -37,71 +34,37 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
 
   const attendeeCount = attendeeRows.length;
 
-  // If guestId supplied (after identity step), show full RSVP form
-  let guest = null;
+  let initialGuestId: string | undefined;
+  let initialGuestName: string | undefined;
   let existingRsvp = null;
-  if (guestId) {
-    const rows = await db
-      .select()
-      .from(guests)
-      .where(eq(guests.id, guestId))
-      .limit(1);
-    guest = rows[0] ?? null;
 
+  if (guestId) {
+    const rows = await db.select().from(guests).where(eq(guests.id, guestId)).limit(1);
+    const guest = rows[0] ?? null;
     if (guest) {
-      const rsvpRows = await db
-        .select()
-        .from(rsvps)
-        .where(eq(rsvps.guestId, guest.id))
-        .limit(1);
+      initialGuestId = guest.id;
+      initialGuestName = guest.name;
+      const rsvpRows = await db.select().from(rsvps).where(eq(rsvps.guestId, guest.id)).limit(1);
       existingRsvp = rsvpRows[0] ?? null;
     }
   }
 
-  const isPastDeadline = event.rsvpDeadline && event.rsvpDeadline < new Date();
+  const isPastDeadline = !!(event.rsvpDeadline && event.rsvpDeadline < new Date());
 
-  // After identity step: use the standard two-column layout for the full RSVP form
-  if (guest) {
-    return (
-      <PublicEventLayout
-        event={event}
-        hostName={hostName}
-        sidebarTitle="Will you join us?"
-      >
-        {isPastDeadline ? (
-          <p className="text-zinc-500 text-sm">
-            The RSVP deadline for this event has passed.
-          </p>
-        ) : (
-          <RsvpForm
-            guestId={guest.id}
-            guestName={guest.name}
-            allowPlusOnes={event.allowPlusOnes}
-            maxPlusOnes={event.maxPlusOnes}
-            existingStatus={existingRsvp?.status}
-            existingPlusOnes={existingRsvp?.plusOnes}
-            thankYouPath={`/e/${slug}/thanks`}
-          />
-        )}
-      </PublicEventLayout>
-    );
-  }
+  const client = await clerkClient();
+  const hostUser = await client.users.getUser(event.hostId).catch(() => null);
+  const hostName = hostUser?.fullName ?? hostUser?.firstName ?? null;
 
-  // Identity step: hero layout
   return (
-    <PublicEventHero event={event}>
-      <h2 className="text-lg font-bold text-zinc-900 mb-1">Who&apos;s coming?</h2>
-      {attendeeCount > 0 && (
-        <p className="text-xs text-zinc-400 mb-4">
-          Join the {attendeeCount} {attendeeCount === 1 ? "other" : "others"} who have already secured their spot for this magical evening.
-        </p>
-      )}
-      {!attendeeCount && (
-        <p className="text-xs text-zinc-400 mb-4">
-          Join the others who have already secured their spot for this magical evening.
-        </p>
-      )}
-      <PublicRsvpIdentityForm eventId={event.id} slug={slug} />
-    </PublicEventHero>
+    <InviteTemplate
+      event={event}
+      template={template}
+      hostName={hostName}
+      attendeeCount={attendeeCount}
+      initialGuestId={initialGuestId}
+      initialGuestName={initialGuestName}
+      existingRsvp={existingRsvp}
+      isPastDeadline={isPastDeadline}
+    />
   );
 }

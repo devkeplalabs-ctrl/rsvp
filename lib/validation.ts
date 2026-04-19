@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const createEventSchema = z.object({
+  category: z.enum(["supper", "wedding", "birthday", "play", "weekend"]).default("birthday"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   location: z.string().optional(),

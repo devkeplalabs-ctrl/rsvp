@@ -1,12 +1,31 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
+import { Fraunces, Archivo, Caveat } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
   subsets: ["latin"],
+  axes: ["opsz"],
+  weight: "variable",
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  variable: "--font-caveat",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -28,7 +47,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html
         lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        className={`${fraunces.variable} ${archivo.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col bg-stone-50">
           {children}

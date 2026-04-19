@@ -13,6 +13,7 @@ import { createEvent } from "@/lib/rsvp";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { CustomDetailsEditor, type CustomDetail } from "@/components/event/CustomDetailsEditor";
 import { LocationPicker } from "@/components/event/LocationPicker";
+import { TemplatePicker } from "@/components/invite/TemplatePicker";
 
 export function NewEventForm() {
   const [title, setTitle] = useState("");
@@ -48,10 +49,19 @@ export function NewEventForm() {
         action={(fd) => startTransition(() => createEvent(fd))}
         className="space-y-8"
       >
+        {/* Section: Template */}
+        <section>
+          <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">
+            01 / Template
+          </p>
+          <p className="text-xs text-zinc-400 mb-4">Choose a visual theme for your invite page.</p>
+          <TemplatePicker />
+        </section>
+
         {/* Section: Essentials */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-4">
-            01 / Essentials
+            02 / Essentials
           </p>
           <div className="space-y-4">
             <div>
@@ -84,7 +94,7 @@ export function NewEventForm() {
         {/* Section: Time & Venue */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-4">
-            02 / Time & Venue
+            03 / Time & Venue
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -133,7 +143,7 @@ export function NewEventForm() {
         {/* Section: Logistics */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-4">
-            03 / Logistics
+            04 / Logistics
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -199,7 +209,7 @@ export function NewEventForm() {
         {/* Section: Custom Details */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">
-            04 / Custom Details
+            05 / Custom Details
           </p>
           <p className="text-xs text-zinc-400 mb-4">Add extra info like dress code, parking, or schedule.</p>
           <CustomDetailsEditor value={customDetails} onChange={setCustomDetails} />

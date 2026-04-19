@@ -15,6 +15,20 @@
       "when": 1775903309727,
       "tag": "0001_stiff_inertia",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775910000000,
+      "tag": "0002_remove_auth_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775910060000,
+      "tag": "0003_add_event_category",
+      "breakpoints": true
     }
   ]
 }

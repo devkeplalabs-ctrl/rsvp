@@ -12,9 +12,18 @@ import {
 
 // ─── App tables ──────────────────────────────────────────────────────────────
 
+export const eventCategoryEnum = pgEnum("event_category", [
+  "supper",
+  "wedding",
+  "birthday",
+  "play",
+  "weekend",
+]);
+
 export const events = pgTable("events", {
   id: uuid("id").defaultRandom().primaryKey(),
   hostId: text("host_id").notNull(),
+  category: eventCategoryEnum("category").default("birthday").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   location: text("location"),

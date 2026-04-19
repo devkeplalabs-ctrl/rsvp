@@ -3,9 +3,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { guests, events, rsvps } from "@/db/schema";
 import { clerkClient } from "@clerk/nextjs/server";
-import { PublicEventLayout } from "@/components/event/PublicEventLayout";
-import { RsvpForm } from "@/components/event/RsvpForm";
-import { Badge } from "@/components/ui/badge";
+import { getTemplate } from "@/lib/event-templates";
+import { InviteTemplate } from "@/components/invite/InviteTemplate";
 import { markGuestOpened } from "@/lib/rsvp";
 
 export default async function TokenizedInvitePage({
@@ -31,9 +30,13 @@ export default async function TokenizedInvitePage({
 
   if (!event) notFound();
 
-  const client = await clerkClient();
-  const hostUser = await client.users.getUser(event.hostId).catch(() => null);
-  const hostName = hostUser?.fullName ?? hostUser?.firstName ?? null;
+  const template = getTemplate(event.category);
+
+  const attendeeRows = await db
+    .select({ id: guests.id })
+    .from(guests)
+    .innerJoin(rsvps, eq(rsvps.guestId, guests.id))
+    .where(eq(guests.eventId, event.id));
 
   const [existing] = await db
     .select()
@@ -41,44 +44,26 @@ export default async function TokenizedInvitePage({
     .where(eq(rsvps.guestId, guest.id))
     .limit(1);
 
-  // Mark as opened (fire and forget)
   if (!guest.openedAt) {
     await markGuestOpened(guest.id);
   }
 
-  const isPastDeadline =
-    event.rsvpDeadline && event.rsvpDeadline < new Date();
+  const isPastDeadline = !!(event.rsvpDeadline && event.rsvpDeadline < new Date());
+
+  const client = await clerkClient();
+  const hostUser = await client.users.getUser(event.hostId).catch(() => null);
+  const hostName = hostUser?.fullName ?? hostUser?.firstName ?? null;
 
   return (
-    <div>
-      {/* "Responding as" pill */}
-      <div className="flex justify-center pt-5 pb-2">
-        <Badge className="bg-rose-50 text-rose-700 border-rose-200 px-4 py-1.5 text-sm font-medium">
-          • Responding as {guest.name}
-        </Badge>
-      </div>
-
-      <PublicEventLayout
-        event={event}
-        hostName={hostName}
-        sidebarTitle="Will you join us?"
-      >
-        {isPastDeadline ? (
-          <p className="text-zinc-500 text-sm">
-            The RSVP deadline for this event has passed.
-          </p>
-        ) : (
-          <RsvpForm
-            guestId={guest.id}
-            guestName={guest.name}
-            allowPlusOnes={event.allowPlusOnes}
-            maxPlusOnes={event.maxPlusOnes}
-            existingStatus={existing?.status}
-            existingPlusOnes={existing?.plusOnes}
-            thankYouPath={`/i/${token}/thanks`}
-          />
-        )}
-      </PublicEventLayout>
-    </div>
+    <InviteTemplate
+      event={event}
+      template={template}
+      hostName={hostName}
+      attendeeCount={attendeeRows.length}
+      initialGuestId={guest.id}
+      initialGuestName={guest.name}
+      existingRsvp={existing ?? null}
+      isPastDeadline={isPastDeadline}
+    />
   );
 }

@@ -14,6 +14,8 @@ import { ImageUploader } from "@/components/shared/ImageUploader";
 import { Event } from "@/db/schema";
 import { CustomDetailsEditor, type CustomDetail } from "@/components/event/CustomDetailsEditor";
 import { LocationPicker } from "@/components/event/LocationPicker";
+import { TemplatePicker } from "@/components/invite/TemplatePicker";
+import type { EventCategory } from "@/lib/event-templates";
 
 interface Props {
   event: Event;
@@ -46,10 +48,19 @@ export function EditEventForm({ event }: Props) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
       <form action={action} className="space-y-8">
+        {/* Section: Template */}
+        <section>
+          <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">
+            01 / Template
+          </p>
+          <p className="text-xs text-zinc-400 mb-4">Choose a visual theme for your invite page.</p>
+          <TemplatePicker defaultValue={event.category as EventCategory} />
+        </section>
+
         {/* Section: Essentials */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-4">
-            01 / Essentials
+            02 / Essentials
           </p>
           <div className="space-y-4">
             <div>
@@ -80,7 +91,7 @@ export function EditEventForm({ event }: Props) {
         {/* Section: Time & Venue */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-4">
-            02 / Time & Venue
+            03 / Time & Venue
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -116,7 +127,7 @@ export function EditEventForm({ event }: Props) {
         {/* Section: Logistics */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-4">
-            03 / Logistics
+            04 / Logistics
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -177,7 +188,7 @@ export function EditEventForm({ event }: Props) {
         {/* Section: Custom Details */}
         <section>
           <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">
-            04 / Custom Details
+            05 / Custom Details
           </p>
           <p className="text-xs text-zinc-400 mb-4">Add extra info like dress code, parking, or schedule.</p>
           <CustomDetailsEditor value={customDetails} onChange={setCustomDetails} />
